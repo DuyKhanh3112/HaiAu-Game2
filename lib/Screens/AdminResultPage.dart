@@ -361,9 +361,10 @@ class _AdminResultPageState extends State<AdminResultPage> {
     }
     //reset user
     for (String u in usersList) {
-      FirebaseFirestore.instance.collection('users').doc(u).update({
-        'currentStage': 0,
-      });
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(u)
+          .update({'currentStage': 0, 'startAt': ''});
     }
 
     setState(() {

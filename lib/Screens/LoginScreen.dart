@@ -120,23 +120,27 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     children: [
                       // const SizedBox(height: 20),
-                      SizedBox(
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Image.network(
-                                logoUrl,
-                                // 'https://res.cloudinary.com/dgmoowcth/image/upload/v1695288215/hai_au_game/title-03_rgrpyl.png',
-                                height: 300,
-                                fit: BoxFit.cover,
+                      logoUrl.isNotEmpty
+                          ? SizedBox(
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Image.network(
+                                      logoUrl,
+                                      // 'https://res.cloudinary.com/dgmoowcth/image/upload/v1695288215/hai_au_game/title-03_rgrpyl.png',
+                                      height: 300,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
+                            )
+                          : const SizedBox(
+                              height: 300,
+                            ),
                       !isSuccessful && isFailed && !isLoading
                           ? Container(
                               padding:
