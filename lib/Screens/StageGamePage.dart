@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:haiau_game2/Objects/programObject.dart';
 import 'package:haiau_game2/Objects/scoreObject.dart';
@@ -15,9 +16,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_web/webview_flutter_web.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:get_ip_address/get_ip_address.dart';
+import 'package:haiau_game2/widgets/showNotifyAlert.dart';
+import 'package:haiau_game2/widgets/countDownClock.dart';
 
 class StageGamePage extends StatefulWidget {
-  StageGamePage({Key? key}) : super(key: key);
+  const StageGamePage({Key? key}) : super(key: key);
 
   @override
   State<StageGamePage> createState() => _StageGamePageState();
@@ -42,15 +47,23 @@ class _StageGamePageState extends State<StageGamePage> {
   String startedTime = '';
   String programDuration = '';
   Map<String, dynamic> userBasicInfo = {};
+  bool isAuthDevice = true;
+
+  bool timeChangedFromServer = true;
 
   Uint8List? imageBytes;
   var imagePath;
+
+  StreamSubscription<QuerySnapshot<Program>>? _stream;
 
   @override
   void initState() {
     super.initState();
     initialFunction();
+    checkIsAllowManyDevice();
     WebView.platform = WebWebViewPlatform();
+
+    // _stream = Amplify
   }
 
   initialFunction() async {
@@ -107,7 +120,7 @@ class _StageGamePageState extends State<StageGamePage> {
       DateTime dateTime = DateTime.now();
       final currrentTime = dateTime.toUtc().add(const Duration(hours: 7));
 
-      var timeUserStart;
+      DateTime timeUserStart;
       if (relatedUser.startAt.isEmpty) {
         timeUserStart = currrentTime;
       } else {
@@ -149,7 +162,8 @@ class _StageGamePageState extends State<StageGamePage> {
 
     final snapshotUser = await usersCollection.doc(userId[0]).get();
 
-    final relatedUser = User.fromJson(snapshotUser.data() as Map<String, dynamic>);
+    final relatedUser =
+        User.fromJson(snapshotUser.data() as Map<String, dynamic>);
 
     final snapshotStage = await stagesCollection
         .where('id_program', isEqualTo: userInfo[0])
@@ -160,7 +174,9 @@ class _StageGamePageState extends State<StageGamePage> {
         .toList();
 
     final snapshotProgram = await programsCollection.doc(userInfo[0]).get();
-    final relatedProgram = Program.fromJson(snapshotProgram.data() as Map<String, dynamic>);
+
+    final relatedProgram =
+        Program.fromJson(snapshotProgram.data() as Map<String, dynamic>);
 
     if (allRelatedStage.isEmpty) {
       if (mounted) {
@@ -170,17 +186,41 @@ class _StageGamePageState extends State<StageGamePage> {
       }
     }
 
-    if (mounted) {
-      setState(() {
-        currentStage = allRelatedStage;
-        startedTime = relatedUser.startAt;
-        programDuration = relatedProgram.duration;
-        userBasicInfo = {
-          "name":relatedUser.name,
-          "avatar":relatedUser.avatar
-        };
-      });
-    }
+    programsCollection.doc(userInfo[0]).snapshots().listen((snapshot) {
+      Map<String, dynamic> jsonData = snapshot.data() as Map<String, dynamic>;
+      jsonData['id'] = snapshot.id;
+      Program newProgram = Program.fromJson(jsonData);
+
+      if (mounted) {
+        setState(() {
+          currentStage = allRelatedStage;
+          startedTime = relatedUser.startAt;
+          programDuration = newProgram.duration;
+          // relatedProgram.duration = newProgram.duration;
+          // timeChangedFromServer = true;
+          userBasicInfo = {
+            "name": relatedUser.name,
+            "avatar": relatedUser.avatar
+          };
+        });
+
+        if (relatedProgram.duration != newProgram.duration) {
+          setState(() {
+            timeChangedFromServer = false;
+          });
+          Future.delayed(const Duration(seconds: 0), () {
+            // Navigator.of(context).pushReplacementNamed('/game-stage');
+            setState(() {
+              timeChangedFromServer = true;
+            });
+          });
+
+          // timeChangedFromServer = false;
+        }
+        print("Rel: ${relatedProgram.duration}");
+        print("New: ${newProgram.duration}");
+      }
+    });
   }
 
   handleCheckForNextStage() async {
@@ -494,6 +534,83 @@ class _StageGamePageState extends State<StageGamePage> {
     });
   }
 
+  checkIsAllowManyDevice() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? userInfo = prefs.getStringList('player_auth');
+    if (userInfo != null) {
+      final programID = userInfo[0];
+      // final snapshotProgram =
+      //     await programsCollection.where("id", isEqualTo: programID).get();
+      final snapshotProgram = await programsCollection.get();
+      final allProgramIds = snapshotProgram.docs.map((doc) => doc.id).toList();
+      final index = allProgramIds.indexOf(programID);
+      final allIsAllow =
+          snapshotProgram.docs.map((doc) => doc['isAllowManyDevice']).toList();
+      final isAllow = allIsAllow[index];
+      if (!isAllow) {
+        checkDeviceID();
+      }
+    }
+  }
+
+  String? ip;
+  checkDeviceID() async {
+    try {
+      /// Initialize Ip Address
+      var ipAddress = IpAddress(type: RequestType.json);
+
+      /// Get the IpAddress based on requestType.
+      dynamic data = await ipAddress.getIpAddress();
+      ip = data['ip'];
+      final prefs = await SharedPreferences.getInstance();
+      final List<String>? userId = prefs.getStringList('player_id');
+      if (userId != null) {
+        final snapshotUser = await usersCollection.get();
+        final allUserID = snapshotUser.docs.map((doc) => doc.id).toList();
+        final allIDDevice =
+            snapshotUser.docs.map((doc) => doc['id_device']).toList();
+
+        final index = allUserID.indexOf(userId[0]);
+        final idDeviceDb = allIDDevice[index];
+
+        if (idDeviceDb != ip) {
+          setState(() {
+            isAuthDevice = false;
+          });
+        }
+      }
+    } on IpAddressException catch (exception) {
+      /// Handle the exception.
+      print(exception.message);
+    }
+    print("Au: $isAuthDevice");
+  }
+
+  handleLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? userId = prefs.getStringList('player_id');
+
+    await prefs.remove('player_auth');
+    await prefs.remove('alreadyEnterProgram');
+    await prefs.remove('player_id');
+
+    await prefs.setString('isDevice', 'false');
+    Future.delayed(const Duration(seconds: 0), () {
+      Navigator.of(context).pushReplacementNamed('/login');
+    });
+  }
+
+  handelNoteTrueDeviceID() async {
+    showDialog(
+        context: context,
+        builder: (context) => const ShowNotifyAlert(
+            type: 'Lỗi !!!',
+            errorText:
+                'Tài khoản đang được đăng nhập bằng thiết bị khác.\n Bạn phải đăng nhập để thực hiện trò chơi'));
+
+    handleLogout();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -526,55 +643,60 @@ class _StageGamePageState extends State<StageGamePage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const SizedBox(height: 15),
-                          ClockCountDown(
-                              timeStart: startedTime,
-                              currentProgramDuration: programDuration),
+                          timeChangedFromServer
+                              ? ClockCountDown(
+                                  timeStart: startedTime,
+                                  currentProgramDuration: programDuration)
+                              : const SizedBox(),
                           const SizedBox(height: 15),
-                          if(userBasicInfo['name'] != null)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal:30),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  CircleAvatar(
-                                    radius:34,
-                                    backgroundColor:Colors.white,
-                                    child: CircleAvatar(
-                                      radius:32,
+                          if (userBasicInfo['name'] != null)
+                            Center(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 30),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 34,
+                                      backgroundColor: Colors.white,
                                       child: CircleAvatar(
-                                        radius:30,
-                                        backgroundImage: NetworkImage(userBasicInfo['avatar']),
+                                        radius: 32,
+                                        child: CircleAvatar(
+                                          radius: 30,
+                                          backgroundImage: NetworkImage(
+                                              userBasicInfo['avatar']),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        '${userBasicInfo['name']}',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize:21,
-                                            fontWeight: FontWeight.w700),
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        'Current stage: ${currentStage[0].order_index}',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                    const SizedBox(height: 10),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          '${userBasicInfo['name']}',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 21,
+                                              fontWeight: FontWeight.w700),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          'Current stage: ${currentStage[0].order_index}',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w700),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
                           const SizedBox(height: 30),
                           Padding(
                             padding:
@@ -641,21 +763,26 @@ class _StageGamePageState extends State<StageGamePage> {
                                                   children: [
                                                     ElevatedButton(
                                                       style: ElevatedButton.styleFrom(
-                                                          primary: const Color(
-                                                              0xFF187498),
+                                                          backgroundColor:
+                                                              const Color(
+                                                                  0xFF187498),
                                                           padding:
                                                               const EdgeInsets
-                                                                      .symmetric(
+                                                                  .symmetric(
                                                                   horizontal:
                                                                       50,
                                                                   vertical:
                                                                       13)),
-                                                      onPressed: () {
-                                                        setState(() {
-                                                          imageBytes = null;
-                                                          imagePath = null;
-                                                        });
-                                                      },
+                                                      onPressed: !isAuthDevice
+                                                          ? null
+                                                          : () {
+                                                              setState(() {
+                                                                imageBytes =
+                                                                    null;
+                                                                imagePath =
+                                                                    null;
+                                                              });
+                                                            },
                                                       child: const Text(
                                                         'Cancel',
                                                         style: TextStyle(
@@ -694,7 +821,8 @@ class _StageGamePageState extends State<StageGamePage> {
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                primary: Color.fromARGB(255, 219, 22, 8),
+                                backgroundColor:
+                                    const Color.fromARGB(255, 219, 22, 8),
                                 padding: const EdgeInsets.symmetric(
                                     vertical: 17, horizontal: 20),
                               ),
@@ -882,7 +1010,9 @@ class _StageGamePageState extends State<StageGamePage> {
                               ),
                               child: Container(
                                 child: InkWell(
-                                  onTap: handleCheckForNextStage,
+                                  onTap: !isAuthDevice
+                                      ? handelNoteTrueDeviceID
+                                      : handleCheckForNextStage,
                                   child: Container(
                                     width: double.infinity,
                                     alignment: Alignment.center,
@@ -932,160 +1062,5 @@ class _StageGamePageState extends State<StageGamePage> {
                       ))),
       )),
     );
-  }
-}
-
-class ClockCountDown extends StatefulWidget {
-  ClockCountDown(
-      {Key? key, required this.timeStart, required this.currentProgramDuration})
-      : super(key: key);
-
-  String timeStart;
-  String currentProgramDuration;
-
-  @override
-  State<ClockCountDown> createState() =>
-      _ClockCountDownState(timeStart, currentProgramDuration);
-}
-
-class _ClockCountDownState extends State<ClockCountDown> {
-  CollectionReference usersCollection =
-      FirebaseFirestore.instance.collection('users');
-  CollectionReference programsCollection =
-      FirebaseFirestore.instance.collection('programs');
-
-  int hours = 0;
-  int minutes = 0;
-  int seconds = 0;
-
-  late String timeStart;
-  String currentProgramDuration;
-
-  int timeLeft = 0;
-
-  _ClockCountDownState(this.timeStart, this.currentProgramDuration);
-
-  @override
-  void initState() {
-    super.initState();
-    getTotalTime();
-  }
-
-  getTotalTime() async {
-    DateTime dateTime = DateTime.now();
-    final currrentTime = dateTime.toUtc().add(const Duration(hours: 7));
-
-    var timeUserStart;
-    if (timeStart.isEmpty) {
-      timeUserStart = currrentTime;
-    } else {
-      timeUserStart = DateTime.parse(timeStart);
-    }
-
-    Duration diff = currrentTime.difference(timeUserStart);
-    final diffInSeconds = diff.inSeconds;
-    final duration = int.parse(currentProgramDuration) * 60;
-
-    if (duration - diffInSeconds > 0) {
-      if (mounted) {
-        setState(() {
-          timeLeft = duration - diffInSeconds;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          timeLeft = 0;
-        });
-      }
-      return Future.delayed(const Duration(seconds: 0), () {
-        Navigator.of(context).pushReplacementNamed('/ending');
-      });
-    }
-
-    getHours();
-    getMinutes();
-    getSeconds();
-
-    if (timeLeft > 0) {
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        getTotalTime();
-      });
-    }
-  }
-
-  getHours() {
-    int hourLeft = timeLeft ~/ 3600;
-    if (mounted) {
-      setState(() {
-        hours = hourLeft;
-      });
-    }
-  }
-
-  getMinutes() {
-    int minuteLeft = (timeLeft % 3600) ~/ 60;
-    if (mounted) {
-      setState(() {
-        minutes = minuteLeft;
-      });
-    }
-  }
-
-  getSeconds() {
-    int secondLeft = timeLeft % 60;
-    if (mounted) {
-      setState(() {
-        seconds = secondLeft;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-      const Text('Time left until the event ends',
-          style: TextStyle(
-              color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
-      const SizedBox(height: 5),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.network(
-              'https://res.cloudinary.com/dhrpdnd8m/image/upload/v1659411656/padteq8jvwnvc5xgxl2m.png',
-              height: 35),
-          const SizedBox(width: 10),
-          Row(
-            children: [
-              Text(hours < 10 ? "0${hours.toString()}" : hours.toString(),
-                  style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600)),
-              const Text(":",
-                  style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600)),
-              Text(minutes < 10 ? "0${minutes.toString()}" : minutes.toString(),
-                  style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600)),
-              const Text(":",
-                  style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600)),
-              Text(seconds < 10 ? "0${seconds.toString()}" : seconds.toString(),
-                  style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600)),
-            ],
-          )
-        ],
-      )
-    ]);
   }
 }

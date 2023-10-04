@@ -11,6 +11,7 @@ class User {
   int currentStage;
   String startAt;
   String isOnline;
+  String id_device = "";
 
   User.fromJson(Map<String, dynamic> json)
       : id = json["id"],
@@ -22,7 +23,8 @@ class User {
         id_program = json["id_program"],
         currentStage = json["currentStage"],
         startAt = json["startAt"],
-        isOnline = json["isOnline"];
+        isOnline = json["isOnline"],
+        id_device = json["id_device"];
 
   Map<String, dynamic> toJson() => {
         "name": name,
@@ -33,6 +35,7 @@ class User {
         "id_program": id_program,
         "currentStage": currentStage,
         "startAt": startAt,
-        "isOnline":isOnline,
+        "isOnline": isOnline,
+        "id_device": id_device
       };
 }

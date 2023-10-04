@@ -1,7 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:haiau_game2/Objects/programObject.dart';
 import 'package:haiau_game2/Objects/userObject.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:get_ip_address/get_ip_address.dart';
+
+import 'package:haiau_game2/widgets/showNotifyAlert.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -25,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     getLogoURL();
+    checkDevice();
   }
 
   @override
@@ -36,6 +43,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   CollectionReference usersCollection =
       FirebaseFirestore.instance.collection('users');
+  CollectionReference programsCollection =
+      FirebaseFirestore.instance.collection('programs');
+  String? ip;
+  List listProgramID = [];
+  List listProgramIsAllow = [];
+
+  checkDevice() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? isDevice = prefs.getString("isDevice");
+    if (isDevice != null) {
+      if (isDevice.toString() == "false") {
+        showDialog(
+            context: context,
+            builder: (context) => const ShowNotifyAlert(
+                type: 'Lỗi !!!',
+                errorText:
+                    'Tài khoản đang được đăng nhập bằng thiết bị khác.\n Bạn phải đăng nhập để thực hiện trò chơi'));
+      }
+    }
+    await prefs.remove('isDevice');
+  }
 
   loginUser() async {
     if (isLoading) return;
@@ -62,11 +90,24 @@ class _LoginScreenState extends State<LoginScreen> {
       data["id"] = snapshot.docs[0].id;
       User user = User.fromJson(data);
 
+      try {
+        /// Initialize Ip Address
+        var ipAddress = IpAddress(type: RequestType.json);
+
+        /// Get the IpAddress based on requestType.
+        dynamic data = await ipAddress.getIpAddress();
+        ip = data['ip'];
+      } on IpAddressException catch (exception) {
+        /// Handle the exception.
+        print(exception.message);
+      }
+
       await prefs.setStringList('player_auth', <String>[
         user.id_program.toString(),
         user.role.toString(),
         user.name.toString(),
         user.avatar.toString(),
+        ip.toString(),
       ]);
 
       await prefs.setStringList('player_id', <String>[user.id.toString()]);
@@ -76,6 +117,22 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.of(context).pushReplacementNamed('/admin-home');
         });
       } else {
+        // final snapshotProgram = await programsCollection.get();
+        // final allProgramIds =
+        //     snapshotProgram.docs.map((doc) => doc.id).toList();
+        // final index = allProgramIds.indexOf(user.id_program);
+        // final allIsAllow = snapshotProgram.docs
+        //     .map((doc) => doc['isAllowManyDevice'])
+        //     .toList();
+        // final isAllow = allIsAllow[index];
+        // if (!isAllow) {
+
+        FirebaseFirestore.instance
+            .collection("users")
+            .doc(user.id)
+            .update({'id_device': ip.toString()});
+        // }
+
         Future.delayed(const Duration(seconds: 1), () {
           Navigator.of(context).pushReplacementNamed('/waiting-room');
         });
@@ -87,6 +144,17 @@ class _LoginScreenState extends State<LoginScreen> {
         isLoading = false;
       });
     }
+  }
+
+  fetchData() async {
+    final snapshot = await programsCollection.get();
+    final allProgramIds = snapshot.docs.map((doc) => doc.id).toList();
+    final allIsAllow =
+        snapshot.docs.map((doc) => doc['isAllowManyDevice']).toList();
+    setState(() {
+      listProgramID = allProgramIds;
+      listProgramIsAllow = allIsAllow;
+    });
   }
 
   String logoUrl = "";

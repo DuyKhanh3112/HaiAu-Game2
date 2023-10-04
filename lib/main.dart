@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:haiau_game2/Screens/AdminAccountViewPage.dart';
 import 'package:haiau_game2/Screens/AdminPage.dart';
 import 'package:haiau_game2/Screens/AdminResultPage.dart';
+import 'package:haiau_game2/Screens/AdminSettingPage.dart';
 import 'package:haiau_game2/Screens/AllTeamResult.dart';
 import 'package:haiau_game2/Screens/CreateProgramPage.dart';
 import 'package:haiau_game2/Screens/CreateStagePage.dart';
@@ -65,14 +66,15 @@ class _MainPageState extends State<MainPage> {
         "/player-result": (context) => CurrentPlayerResult(),
         "/ending": (context) => EndingPage(),
         "/update-info": (context) => UpdateInfoPage(),
-        "/waiting-room": (context) => WaitingRoom(),
+        "/waiting-room": (context) => const WaitingRoom(),
         "/login": (context) => const LoginScreen(),
         "/admin-home": (context) => const AdminPage(),
-        "/add-program": (context) => CreateProgramPage(),
+        "/add-program": (context) => const CreateProgramPage(),
         "/add-stage": (context) => const CreateStagePage(),
         "/evaluation": (context) => EvaluationPage(),
         "/admin-result": (context) => const AdminResultPage(),
-        "/game-stage": (context) => StageGamePage(),
+        "/game-stage": (context) => const StageGamePage(),
+        "/admin-setting": (context) => const AdminSettingPage(),
       },
     );
   }

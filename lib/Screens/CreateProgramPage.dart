@@ -10,7 +10,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CreateProgramPage extends StatefulWidget {
-  CreateProgramPage({Key? key}) : super(key: key);
+  const CreateProgramPage({Key? key}) : super(key: key);
 
   @override
   State<CreateProgramPage> createState() => _CreateProgramPageState();
@@ -22,9 +22,12 @@ class _CreateProgramPageState extends State<CreateProgramPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _durationController = TextEditingController();
 
-  CollectionReference programsCollection = FirebaseFirestore.instance.collection('programs');
-  CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
-  CollectionReference stagesCollection = FirebaseFirestore.instance.collection('stages');
+  CollectionReference programsCollection =
+      FirebaseFirestore.instance.collection('programs');
+  CollectionReference usersCollection =
+      FirebaseFirestore.instance.collection('users');
+  CollectionReference stagesCollection =
+      FirebaseFirestore.instance.collection('stages');
 
   bool isLoading = false;
 
@@ -45,14 +48,14 @@ class _CreateProgramPageState extends State<CreateProgramPage> {
 
   checkForAuth() async {
     final prefs = await SharedPreferences.getInstance();
-    final List<String>? user_info = prefs.getStringList('player_auth');
+    final List<String>? userInfo = prefs.getStringList('player_auth');
 
-    if (user_info != null) {
-      if (user_info[1] == 'player') {
+    if (userInfo != null) {
+      if (userInfo[1] == 'player') {
         Future.delayed(const Duration(seconds: 0), () {
           Navigator.of(context).pushReplacementNamed('/waiting-room');
         });
-      } else if (user_info[1] == 'porter') {
+      } else if (userInfo[1] == 'porter') {
         Future.delayed(const Duration(seconds: 0), () {
           Navigator.of(context).pushReplacementNamed('/admin-home');
         });
@@ -87,9 +90,9 @@ class _CreateProgramPageState extends State<CreateProgramPage> {
       isLoading = true;
     });
 
-
     // create program
-    Program newProgram = Program(_mapNameController.text, _durationController.text, _passwordController.text);
+    Program newProgram = Program(_mapNameController.text,
+        _durationController.text, _passwordController.text);
     String newProgramId = programsCollection.doc().id;
     DocumentReference refProgram = programsCollection.doc(newProgramId);
     batch.set(refProgram, newProgram.toJson());
@@ -105,16 +108,16 @@ class _CreateProgramPageState extends State<CreateProgramPage> {
       String newUserId = usersCollection.doc().id;
       DocumentReference refUser = usersCollection.doc(newUserId);
       User newUser = User(
-          "team${i + 1}",
-          "team${i + 1}${generateRandomString(5)}",
-          random(100000, 999999).toString(),
-          "https://res.cloudinary.com/dhrpdnd8m/image/upload/v1657729253/j6lrhf3wtvbnznp220fy.webp",
-          "player",
-          newProgramId,
-          1,
-          '',
-          "false",
-        );
+        "team${i + 1}",
+        "team${i + 1}${generateRandomString(5)}",
+        random(100000, 999999).toString(),
+        "https://res.cloudinary.com/dhrpdnd8m/image/upload/v1657729253/j6lrhf3wtvbnznp220fy.webp",
+        "player",
+        newProgramId,
+        1,
+        '',
+        "false",
+      );
       batch.set(refUser, newUser.toJson());
     }
 
@@ -127,6 +130,7 @@ class _CreateProgramPageState extends State<CreateProgramPage> {
 
     setState(() {
       isLoading = false;
+      isAllow = false;
     });
 
     showDialog(
@@ -146,6 +150,8 @@ class _CreateProgramPageState extends State<CreateProgramPage> {
         'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
     return List.generate(len, (index) => chars[r.nextInt(chars.length)]).join();
   }
+
+  bool isAllow = true;
 
   @override
   Widget build(BuildContext context) {
@@ -173,10 +179,10 @@ class _CreateProgramPageState extends State<CreateProgramPage> {
                   alignment: Alignment.centerLeft,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                  child: Column(
+                  child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text('Tạo chương trình',
                           style: TextStyle(
                               fontSize: 30,
@@ -278,12 +284,13 @@ class _CreateProgramPageState extends State<CreateProgramPage> {
                                       labelText: "Mật khẩu chương trình",
                                     )),
                                 const SizedBox(height: 24),
+                                const SizedBox(height: 24),
                                 SizedBox(
                                   width: MediaQuery.of(context).size.width * 1,
                                   child: ElevatedButton(
                                       onPressed: handleCreateProgram,
                                       style: ElevatedButton.styleFrom(
-                                          primary: isLoading
+                                          backgroundColor: isLoading
                                               ? const Color.fromARGB(
                                                   255, 44, 103, 46)
                                               : Colors.green,

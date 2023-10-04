@@ -348,75 +348,79 @@ class _AdminPageState extends State<AdminPage> {
                           ? Container(
                               padding: const EdgeInsets.all(10),
                               child: InkWell(
-                                onTap: () => showDialog<String>(
-                                  context: context,
-                                  builder: (BuildContext context) =>
-                                      AlertDialog(
-                                    title: const Text(
-                                      'Xác nhận làm mới dữ liệu',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        // color: Colors.red,
-                                        fontSize: 20,
-                                      ),
-                                    ),
-                                    content: SingleChildScrollView(
-                                      child: ListBody(
-                                        children: <Widget>[
-                                          const Text(
-                                            'Dữ liệu chương trình, chặng chơi, người chơi sẽ bị xóa sau khi làm mới.',
-                                            style: TextStyle(
-                                              fontStyle: FontStyle.italic,
-                                              color: Colors.red,
-                                            ),
-                                          ),
-                                          TextField(
-                                            controller: _confirmController,
-                                            decoration: const InputDecoration(
-                                              label: Text(
-                                                  'Nhập "reset" để làm mới lại dữ liệu.'),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, 'Cancel'),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          final confirm =
-                                              _confirmController.text;
-                                          if (confirm == "reset") {
-                                            resetGame();
-                                            Navigator.pop(context, 'Cancel');
-                                          } else {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) =>
-                                                  const ShowNotifyAlert(
-                                                      type: 'Không thành công',
-                                                      errorText:
-                                                          'Làm mới dữ liệu không thành công!'),
-                                            );
-                                          }
-                                        },
-                                        child: const Text('OK'),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                child: const Row(
+                                onTap: () {
+                                  Navigator.of(context)
+                                      .pushReplacementNamed('/admin-setting');
+                                },
+                                // showDialog<String>(
+                                //   context: context,
+                                //   builder: (BuildContext context) =>
+                                //       AlertDialog(
+                                //     title: const Text(
+                                //       'Xác nhận làm mới dữ liệu',
+                                //       style: TextStyle(
+                                //         fontWeight: FontWeight.bold,
+                                //         // color: Colors.red,
+                                //         fontSize: 20,
+                                //       ),
+                                //     ),
+                                //     content: SingleChildScrollView(
+                                //       child: ListBody(
+                                //         children: <Widget>[
+                                //           const Text(
+                                //             'Dữ liệu chương trình, chặng chơi, người chơi sẽ bị xóa sau khi làm mới.',
+                                //             style: TextStyle(
+                                //               fontStyle: FontStyle.italic,
+                                //               color: Colors.red,
+                                //             ),
+                                //           ),
+                                //           TextField(
+                                //             controller: _confirmController,
+                                //             decoration: const InputDecoration(
+                                //               label: Text(
+                                //                   'Nhập "reset" để làm mới lại dữ liệu.'),
+                                //             ),
+                                //           ),
+                                //         ],
+                                //       ),
+                                //     ),
+                                //     actions: <Widget>[
+                                //       TextButton(
+                                //         onPressed: () =>
+                                //             Navigator.pop(context, 'Cancel'),
+                                //         child: const Text('Cancel'),
+                                //       ),
+                                //       TextButton(
+                                //         onPressed: () {
+                                //           final confirm =
+                                //               _confirmController.text;
+                                //           if (confirm == "reset") {
+                                //             resetGame();
+                                //             Navigator.pop(context, 'Cancel');
+                                //           } else {
+                                //             showDialog(
+                                //               context: context,
+                                //               builder: (context) =>
+                                //                   const ShowNotifyAlert(
+                                //                       type: 'Không thành công',
+                                //                       errorText:
+                                //                           'Làm mới dữ liệu không thành công!'),
+                                //             );
+                                //           }
+                                //         },
+                                //         child: const Text('OK'),
+                                //       ),
+                                //     ],
+                                //   ),
+                                // ),
+                                child: Row(
                                   children: [
-                                    // Image.network(
-                                    //     'https://res.cloudinary.com/dhrpdnd8m/image/upload/v1649657800/folder_1_a35vck.png',
-                                    //     height: 40),
-                                    Icon(Icons.restore, size: 40),
-                                    SizedBox(width: 10),
-                                    Text('Reset',
+                                    Image.network(
+                                        'https://res.cloudinary.com/dgmoowcth/image/upload/v1695890331/hai_au_game/icon_setting_khuyvb.png',
+                                        height: 40),
+                                    // Icon(Icons.settings, size: 40),
+                                    const SizedBox(width: 10),
+                                    const Text('Cài đặt',
                                         style: TextStyle(
                                             color: Colors.black,
                                             fontSize: 16,
