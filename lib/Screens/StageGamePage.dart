@@ -203,7 +203,8 @@ class _StageGamePageState extends State<StageGamePage> {
             "avatar": relatedUser.avatar
           };
         });
-
+        print("Rel: ${relatedProgram.duration}");
+        print("New: ${newProgram.duration}");
         if (relatedProgram.duration != newProgram.duration) {
           setState(() {
             timeChangedFromServer = false;
@@ -215,10 +216,10 @@ class _StageGamePageState extends State<StageGamePage> {
             });
           });
 
+          relatedProgram.duration = newProgram.duration;
+
           // timeChangedFromServer = false;
         }
-        print("Rel: ${relatedProgram.duration}");
-        print("New: ${newProgram.duration}");
       }
     });
   }
