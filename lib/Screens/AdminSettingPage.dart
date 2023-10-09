@@ -341,11 +341,24 @@ class _AdminSettingPageState extends State<AdminSettingPage> {
                           ),
                         ),
                         actions: <Widget>[
-                          TextButton(
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
+                                textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            child: const Text('Đóng'),
                             onPressed: () => Navigator.pop(context, 'Cancel'),
-                            child: const Text('Cancel'),
                           ),
-                          TextButton(
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
+                                textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            child: const Text('Cập nhật'),
                             onPressed: () {
                               if (_logoController.text.isEmpty ||
                                   _logoController.text == "") {
@@ -354,7 +367,6 @@ class _AdminSettingPageState extends State<AdminSettingPage> {
                               }
                               Navigator.pop(context, 'Cancel');
                             },
-                            child: const Text('OK'),
                           ),
                         ],
                       ),
@@ -415,11 +427,17 @@ class _AdminSettingPageState extends State<AdminSettingPage> {
                           ),
                         ),
                         actions: <Widget>[
-                          TextButton(
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
+                                textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            child: const Text('Đóng'),
                             onPressed: () => Navigator.pop(context, 'Cancel'),
-                            child: const Text('Cancel'),
                           ),
-                          TextButton(
+                          ElevatedButton(
                             onPressed: () {
                               final confirm = _confirmController.text;
                               if (confirm == "reset") {
@@ -435,7 +453,13 @@ class _AdminSettingPageState extends State<AdminSettingPage> {
                                 );
                               }
                             },
-                            child: const Text('OK'),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
+                                textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            child: const Text('Khởi động lại'),
                           ),
                         ],
                       ),

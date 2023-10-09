@@ -41,6 +41,8 @@ class _CreateStagePageState extends State<CreateStagePage> {
   String nameStage = "";
   List stageNameList = [];
   List allStage = [];
+  // String? stageID;
+  int? stageOrderIndex;
 
   CollectionReference programsCollection =
       FirebaseFirestore.instance.collection('programs');
@@ -50,6 +52,8 @@ class _CreateStagePageState extends State<CreateStagePage> {
       FirebaseFirestore.instance.collection('users');
 
   late FocusNode myFocusNode;
+
+  bool isEdit = false;
 
   @override
   void initState() {
@@ -227,6 +231,145 @@ class _CreateStagePageState extends State<CreateStagePage> {
       programList = allData;
       programIdList = allProgramIds;
     });
+  }
+
+  editStage() async {
+    if (_nameController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        destinationUrl.isEmpty) {
+      return showDialog(
+          context: context,
+          builder: (context) => const ShowNotifyAlert(
+              type: 'Lỗi', errorText: 'Vui lòng nhập đầy đủ thông tin'));
+    }
+
+    final snapshot = await stagesCollection
+        .where('id_program', isEqualTo: programId)
+        .where('order_index', isEqualTo: stageOrderIndex)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      Map<String, dynamic> data =
+          snapshot.docs[0].data() as Map<String, dynamic>;
+      data["id"] = snapshot.docs[0].id;
+
+      Stage stage = Stage.fromJson(data);
+
+      FirebaseFirestore.instance.collection('stages').doc(stage.id).update({
+        'description': _descriptionController.text.toString(),
+        'name': _nameController.text.toString(),
+        'destination': destinationUrl,
+        'password': _passwordController.text.toString()
+      });
+
+      showDialog(
+          context: context,
+          builder: (context) => const ShowNotifyAlert(
+              type: 'Thành công', errorText: 'Đã cập nhật chặng thành công!'));
+
+      setState(() {
+        _nameController.clear();
+        _passwordController.clear();
+        _destinationController.clear();
+        _descriptionController.clear();
+        destinationUrl = '';
+        isEdit = false;
+        fetchStageForProgram();
+      });
+    }
+  }
+
+  Padding programStageNotEmpty() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(children: [
+        ...programStage.map((e) => Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.23),
+                    spreadRadius: 1,
+                    blurRadius: 1,
+                    offset: const Offset(1, 1), // changes position of shadow
+                  ),
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.23),
+                    spreadRadius: 1,
+                    blurRadius: 1,
+                    offset: const Offset(-1, -1), // changes position of shadow
+                  ),
+                ],
+              ),
+              margin: const EdgeInsets.symmetric(vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Row(children: [
+                IconButton(
+                  onPressed: () {
+                    print(e.name);
+                    setState(() {
+                      nameStage = e.name;
+                      deleteStage();
+                    });
+                  },
+                  icon: const Icon(Icons.delete),
+                  color: Colors.red,
+                ),
+                const SizedBox(width: 20),
+                IconButton(
+                  onPressed: () {
+                    print("Edit ${e.name}");
+                    setState(() {
+                      nameStage = e.name;
+                      // deleteStage();
+                      _nameController.text = e.name;
+                      _passwordController.text = e.password;
+                      _descriptionController.text = e.description;
+                      _destinationController.text = e.destination;
+                      destinationUrl = e.destination;
+                      stageOrderIndex = e.order_index;
+                      // nameStage = e.order_index;
+                      isEdit = true;
+                      print("${e.order_index}");
+                    });
+                  },
+                  icon: const Icon(Icons.edit),
+                  color: Colors.red,
+                ),
+                const SizedBox(width: 20),
+                Image.network(
+                    'https://res.cloudinary.com/dhrpdnd8m/image/upload/v1659098707/wznudxkak8yxhmw0frm2.png',
+                    height: 35),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        e.name.length > 25
+                            ? e.name.substring(0, 25) + '...'
+                            : e.name,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          overflow: TextOverflow.ellipsis,
+                        )),
+                    Text(
+                      e.password,
+                      style: const TextStyle(
+                        color: Color.fromARGB(255, 73, 70, 70),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ]),
+            ))
+      ]),
+    );
   }
 
   @override
@@ -500,8 +643,9 @@ class _CreateStagePageState extends State<CreateStagePage> {
                                                   .width *
                                               1,
                                           child: ElevatedButton(
-                                            onPressed: () =>
-                                                handleAddNewStage(),
+                                            onPressed: () => isEdit
+                                                ? editStage()
+                                                : handleAddNewStage(),
                                             style: ElevatedButton.styleFrom(
                                                 backgroundColor: isLoading
                                                     ? const Color.fromARGB(
@@ -520,8 +664,11 @@ class _CreateStagePageState extends State<CreateStagePage> {
                                                         color: Colors.white,
                                                         fontWeight:
                                                             FontWeight.w600))
-                                                : const Text('Tạo chặng mới',
-                                                    style: TextStyle(
+                                                : Text(
+                                                    isEdit
+                                                        ? 'Cập nhật chặng'
+                                                        : 'Tạo chặng mới',
+                                                    style: const TextStyle(
                                                         color: Colors.white,
                                                         fontWeight:
                                                             FontWeight.w600)),
@@ -538,78 +685,6 @@ class _CreateStagePageState extends State<CreateStagePage> {
           ),
         ),
       ),
-    );
-  }
-
-  Padding programStageNotEmpty() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(children: [
-        ...programStage.map((e) => Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.23),
-                    spreadRadius: 1,
-                    blurRadius: 1,
-                    offset: const Offset(1, 1), // changes position of shadow
-                  ),
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.23),
-                    spreadRadius: 1,
-                    blurRadius: 1,
-                    offset: const Offset(-1, -1), // changes position of shadow
-                  ),
-                ],
-              ),
-              margin: const EdgeInsets.symmetric(vertical: 5),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              child: Row(children: [
-                IconButton(
-                  onPressed: () {
-                    print(e.name);
-                    setState(() {
-                      nameStage = e.name;
-                      deleteStage();
-                    });
-                  },
-                  icon: const Icon(Icons.delete),
-                  color: Colors.red,
-                ),
-                const SizedBox(width: 20),
-                Image.network(
-                    'https://res.cloudinary.com/dhrpdnd8m/image/upload/v1659098707/wznudxkak8yxhmw0frm2.png',
-                    height: 35),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        e.name.length > 25
-                            ? e.name.substring(0, 25) + '...'
-                            : e.name,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          overflow: TextOverflow.ellipsis,
-                        )),
-                    Text(
-                      e.password,
-                      style: const TextStyle(
-                        color: Color.fromARGB(255, 73, 70, 70),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ]),
-            ))
-      ]),
     );
   }
 

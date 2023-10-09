@@ -281,16 +281,58 @@ class _AdminResultPageState extends State<AdminResultPage> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 15, vertical: 15),
                   ),
-                  onPressed: () async {
-                    if (await confirm(context,
+                  onPressed: () {
+                    showDialog<String>(
+                      context: context,
+                      builder: (BuildContext context) => AlertDialog(
                         title: const Text(
-                            "Bạn có muốn khởi động lại chương trình"),
-                        content: const Text(
-                            "Thông tin người chơi và điểm số sẽ được làm mới sau khi khởi động lại chương trình"))) {
-                      resetProgram();
-                      return print('pressedOK');
-                    }
-                    return print('pressedCancel');
+                          'Bạn có muốn khởi động lại Chương trình?',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            // color: Colors.red,
+                            fontSize: 20,
+                          ),
+                        ),
+                        content: const SingleChildScrollView(
+                          child: ListBody(
+                            children: <Widget>[
+                              Text(
+                                'Thông tin người chơi và điểm số sẽ được làm mới khi khởi động lại chương trình.',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        actions: <Widget>[
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
+                                textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            child: const Text('Đóng'),
+                            onPressed: () => Navigator.pop(context, 'Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              resetProgram();
+                              Navigator.pop(context, 'Cancel');
+                            },
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
+                                textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            child: const Text('Khởi động lại'),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -314,15 +356,58 @@ class _AdminResultPageState extends State<AdminResultPage> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 15, vertical: 15),
                   ),
-                  onPressed: () async {
-                    if (await confirm(context,
-                        title: const Text("Bạn có muốn xóa chương trình"),
-                        content: const Text(
-                            "Thông tin chương trình, chặng chơi, người chơi và điểm số sẽ bị xóa sau khi xóa chương trình"))) {
-                      deleteProgram();
-                      return print('pressedOK');
-                    }
-                    return print('pressedCancel');
+                  onPressed: () {
+                    showDialog<String>(
+                      context: context,
+                      builder: (BuildContext context) => AlertDialog(
+                        title: const Text(
+                          'Bạn có muốn xóa Chương trình?',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            // color: Colors.red,
+                            fontSize: 20,
+                          ),
+                        ),
+                        content: const SingleChildScrollView(
+                          child: ListBody(
+                            children: <Widget>[
+                              Text(
+                                "Thông tin chương trình, chặng chơi, người chơi và điểm số sẽ bị xóa sau khi xóa chương trình",
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        actions: <Widget>[
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
+                                textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            child: const Text('Không'),
+                            onPressed: () => Navigator.pop(context, 'Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              deleteProgram();
+                              Navigator.pop(context, 'Cancel');
+                            },
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
+                                textStyle: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            child: const Text('Có'),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -374,19 +459,19 @@ class _AdminResultPageState extends State<AdminResultPage> {
               type: 'Thành công',
               errorText: 'Khởi động lại chương trình thành công!'));
 
-      // selectedIdProgram = null;
-      // selectedIdUser = null;
-      // listPrograms = List.empty();
+      selectedIdProgram = null;
+      selectedIdUser = null;
+      listPrograms = List.empty();
 
-      // listUsers = List.empty();
-      // listScores = List.empty();
-      // listUsers = List.empty();
+      listUsers = List.empty();
+      listScores = List.empty();
+      listUsers = List.empty();
 
-      // fetchProgram();
-      // StreamUser();
-      // StreamScore();
-      // // isViewingTotalScore = false;
-      // isSuccess = true;
+      fetchProgram();
+      StreamUser();
+      StreamScore();
+      // isViewingTotalScore = false;
+      isSuccess = true;
     });
   }
 
