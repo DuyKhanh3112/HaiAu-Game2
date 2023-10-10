@@ -114,9 +114,28 @@ class _CreateStagePageState extends State<CreateStagePage> {
 
     final index = stageNameList.indexOf(nameStage);
     List stageIDList = snapshot.docs.map((doc) => doc.id).toList();
+    List stageIndexList =
+        snapshot.docs.map((doc) => doc['order_index']).toList();
+    List programIDList = snapshot.docs.map((doc) => doc['id_program']).toList();
     final currentStageID = stageIDList[index];
+    final currentIndex = stageIndexList[index];
+    final currentprogramID = programIDList[index];
+
+    final snapshotPorter = await usersCollection
+        .where('id_program', isEqualTo: currentprogramID)
+        .where('currentStage', isEqualTo: currentIndex)
+        .where('role', isEqualTo: 'porter')
+        .get();
+    final currentPorterID =
+        (snapshotPorter.docs.map((doc) => doc.id).toList())[0];
 
     setState(() {
+      //xoa porter
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentPorterID)
+          .delete();
+      //xoa stage
       final docStage =
           FirebaseFirestore.instance.collection('stages').doc(currentStageID);
       docStage.delete();
@@ -390,7 +409,7 @@ class _CreateStagePageState extends State<CreateStagePage> {
                                   child: ListBody(
                                     children: <Widget>[
                                       Text(
-                                        'Thông tin chặng chơi bị xóa sau khi bạn xác nhận xóa chặng chơi',
+                                        'Thông tin chặng chơi và Porter của chặng sẽ bị xóa sau khi bạn xác nhận xóa chặng chơi',
                                         style: TextStyle(
                                           fontStyle: FontStyle.italic,
                                           color: Colors.red,
