@@ -85,6 +85,7 @@ class _AdminSettingPageState extends State<AdminSettingPage> {
           builder: (context) => const ShowNotifyAlert(
               type: 'Thành công',
               errorText: 'Làm mới lại dữ liệu thành công!'));
+      fetchData();
     });
   }
 
@@ -104,6 +105,8 @@ class _AdminSettingPageState extends State<AdminSettingPage> {
       programIdList = allProgramIds;
       isAllowList = allIsAllow;
       // isAllow = currentIsAllow[0];
+      isSettingProgram = false;
+      programId = '';
     });
   }
 
