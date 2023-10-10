@@ -121,6 +121,10 @@ class _CreateStagePageState extends State<CreateStagePage> {
           FirebaseFirestore.instance.collection('stages').doc(currentStageID);
       docStage.delete();
       fetchStageForProgram();
+      showDialog(
+          context: context,
+          builder: (context) => const ShowNotifyAlert(
+              type: 'Thành công', errorText: 'Đã xóa chặng chơi thành công!'));
     });
   }
 
@@ -304,69 +308,132 @@ class _CreateStagePageState extends State<CreateStagePage> {
               ),
               margin: const EdgeInsets.symmetric(vertical: 5),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              child: Row(children: [
-                IconButton(
-                  onPressed: () {
-                    print(e.name);
-                    setState(() {
-                      nameStage = e.name;
-                      deleteStage();
-                    });
-                  },
-                  icon: const Icon(Icons.delete),
-                  color: Colors.red,
-                ),
-                const SizedBox(width: 20),
-                IconButton(
-                  onPressed: () {
-                    print("Edit ${e.name}");
-                    setState(() {
-                      nameStage = e.name;
-                      // deleteStage();
-                      _nameController.text = e.name;
-                      _passwordController.text = e.password;
-                      _descriptionController.text = e.description;
-                      _destinationController.text = e.destination;
-                      destinationUrl = e.destination;
-                      stageOrderIndex = e.order_index;
-                      // nameStage = e.order_index;
-                      isEdit = true;
-                      print("${e.order_index}");
-                    });
-                  },
-                  icon: const Icon(Icons.edit),
-                  color: Colors.red,
-                ),
-                const SizedBox(width: 20),
-                Image.network(
-                    'https://res.cloudinary.com/dhrpdnd8m/image/upload/v1659098707/wznudxkak8yxhmw0frm2.png',
-                    height: 35),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                        e.name.length > 25
-                            ? e.name.substring(0, 25) + '...'
-                            : e.name,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          overflow: TextOverflow.ellipsis,
-                        )),
-                    Text(
-                      e.password,
-                      style: const TextStyle(
-                        color: Color.fromARGB(255, 73, 70, 70),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    Row(
+                      children: [
+                        Image.network(
+                            'https://res.cloudinary.com/dhrpdnd8m/image/upload/v1659098707/wznudxkak8yxhmw0frm2.png',
+                            height: 35),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                                e.name.length > 25
+                                    ? e.name.substring(0, 25) + '...'
+                                    : e.name,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  overflow: TextOverflow.ellipsis,
+                                )),
+                            Text(
+                              e.password,
+                              style: const TextStyle(
+                                color: Color.fromARGB(255, 73, 70, 70),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ]),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            // print("Edit ${e.name}");
+                            setState(() {
+                              nameStage = e.name;
+                              // deleteStage();
+                              _nameController.text = e.name;
+                              _passwordController.text = e.password;
+                              _descriptionController.text = e.description;
+                              _destinationController.text = e.destination;
+                              destinationUrl = e.destination;
+                              stageOrderIndex = e.order_index;
+                              // nameStage = e.order_index;
+                              isEdit = true;
+                              print("${e.order_index}");
+                            });
+                          },
+                          icon: const Icon(Icons.edit),
+                          color: Colors.green,
+                        ),
+                        const SizedBox(width: 20),
+                        IconButton(
+                          onPressed: () {
+                            // print(e.name);
+                            setState(() {
+                              nameStage = e.name;
+                              // deleteStage();
+                            });
+                            showDialog<String>(
+                              context: context,
+                              builder: (BuildContext context) => AlertDialog(
+                                title: const Text(
+                                  'Bạn có muốn xóa chặng chơi?',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    // color: Colors.red,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                                content: const SingleChildScrollView(
+                                  child: ListBody(
+                                    children: <Widget>[
+                                      Text(
+                                        'Thông tin chặng chơi bị xóa sau khi bạn xác nhận xóa chặng chơi',
+                                        style: TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                actions: <Widget>[
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 15, vertical: 15),
+                                        textStyle: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    child: const Text('Đóng'),
+                                    onPressed: () =>
+                                        Navigator.pop(context, 'Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      deleteStage();
+                                      Navigator.pop(context, 'Cancel');
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 15, vertical: 15),
+                                        textStyle: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    child: const Text('Xác nhận xóa'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.delete),
+                          color: Colors.red,
+                        ),
+                      ],
+                    ),
+                  ]),
             ))
       ]),
     );
